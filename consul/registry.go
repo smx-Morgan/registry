@@ -18,7 +18,7 @@ import (
 	"errors"
 
 	"github.com/cloudwego-contrib/cwgo-pkg/registry/consul/consulhertz"
-	op "github.com/cloudwego-contrib/cwgo-pkg/registry/consul/options"
+	cwOption "github.com/cloudwego-contrib/cwgo-pkg/registry/consul/options"
 	"github.com/cloudwego/hertz/pkg/app/server/registry"
 	"github.com/hashicorp/consul/api"
 )
@@ -42,7 +42,7 @@ type consulRegistry struct {
 var _ registry.Registry = (*consulRegistry)(nil)
 
 type options struct {
-	check *api.AgentServiceCheck
+	cwOptions *cwOption.Options
 }
 
 // Option is the option of Consul.
@@ -50,20 +50,22 @@ type Option func(o *options)
 
 // WithCheck is consul registry option to set AgentServiceCheck.
 func WithCheck(check *api.AgentServiceCheck) Option {
-	return func(o *options) { o.check = check }
+	return func(o *options) {
+		cwOption.WithCheck(check)(o.cwOptions)
+	}
 }
 
 // NewConsulRegister create a new registry using consul.
 func NewConsulRegister(consulClient *api.Client, opts ...Option) registry.Registry {
-	ops := make([]op.Option, len(opts))
-	o := &options{}
+	cwOpts := make([]cwOption.Option, len(opts))
+	o := &options{cwOptions: &cwOption.Options{}}
 
 	for i, opt := range opts {
 		opt(o)
-		ops[i] = op.WithCheck(o.check)
+		cwOpts[i] = cwOption.WithCheck(o.cwOptions.Check)
 	}
 
-	return &consulRegistry{registry: consulhertz.NewConsulRegister(consulClient, ops...)}
+	return &consulRegistry{registry: consulhertz.NewConsulRegister(consulClient, cwOpts...)}
 }
 
 // Register register a service to consul.
