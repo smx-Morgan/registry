@@ -57,12 +57,12 @@ func WithCheck(check *api.AgentServiceCheck) Option {
 
 // NewConsulRegister create a new registry using consul.
 func NewConsulRegister(consulClient *api.Client, opts ...Option) registry.Registry {
-	cwOpts := make([]cwOption.Option, len(opts))
+	cwOpts := make([]cwOption.Option, 0, len(opts))
 	o := &options{cwOptions: &cwOption.Options{}}
 
-	for i, opt := range opts {
+	for _, opt := range opts {
 		opt(o)
-		cwOpts[i] = cwOption.WithCheck(o.cwOptions.Check)
+		cwOpts = append(cwOpts, cwOption.WithCheck(o.cwOptions.Check))
 	}
 
 	return &consulRegistry{registry: consulhertz.NewConsulRegister(consulClient, cwOpts...)}
