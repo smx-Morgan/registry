@@ -15,24 +15,10 @@
 package consul
 
 import (
-	"errors"
-
 	"github.com/cloudwego-contrib/cwgo-pkg/registry/consul/consulhertz"
 	cwOption "github.com/cloudwego-contrib/cwgo-pkg/registry/consul/options"
 	"github.com/cloudwego/hertz/pkg/app/server/registry"
 	"github.com/hashicorp/consul/api"
-)
-
-const (
-	DefaultCheckInterval                       = "5s"
-	DefaultCheckTimeout                        = "5s"
-	DefaultCheckDeregisterCriticalServiceAfter = "1m"
-)
-
-var (
-	ErrNilInfo            = errors.New("info is nil")
-	ErrMissingServiceName = errors.New("missing service name in consul register")
-	ErrMissingAddr        = errors.New("missing addr in consul register")
 )
 
 type consulRegistry struct {

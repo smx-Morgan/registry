@@ -1,6 +1,6 @@
 module github.com/hertz-contrib/registry/consul
 
-go 1.21.13
+go 1.21
 
 require (
 	github.com/cloudwego-contrib/cwgo-pkg/registry/consul v0.0.0-00010101000000-000000000000
