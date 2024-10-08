@@ -17,10 +17,10 @@ package consul
 import (
 	"errors"
 
+	"github.com/cloudwego-contrib/cwgo-pkg/registry/consul/consulhertz"
+	op "github.com/cloudwego-contrib/cwgo-pkg/registry/consul/options"
 	"github.com/cloudwego/hertz/pkg/app/server/registry"
 	"github.com/hashicorp/consul/api"
-	op "github.com/cloudwego-contrib/cwgo-pkg/registry/consul/options"
-	"github.com/cloudwego-contrib/cwgo-pkg/registry/consul/consulhertz"
 )
 
 const (
@@ -57,7 +57,7 @@ func WithCheck(check *api.AgentServiceCheck) Option {
 func NewConsulRegister(consulClient *api.Client, opts ...Option) registry.Registry {
 	ops := make([]op.Option, len(opts))
 	o := &options{}
-	
+
 	for i, opt := range opts {
 		opt(o)
 		ops[i] = op.WithCheck(o.check)

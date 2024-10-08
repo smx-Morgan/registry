@@ -47,4 +47,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/cloudwego-contrib/cwgo-pkg/registry/consul => /home/jichen/code/cwgo-pkg/registry/consul
+replace github.com/cloudwego-contrib/cwgo-pkg/registry/consul => ../../cwgo-pkg/registry/consul
