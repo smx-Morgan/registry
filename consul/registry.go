@@ -16,11 +16,11 @@ package consul
 
 import (
 	"errors"
-	"fmt"
-	"net"
 
 	"github.com/cloudwego/hertz/pkg/app/server/registry"
 	"github.com/hashicorp/consul/api"
+	op "github.com/cloudwego-contrib/cwgo-pkg/registry/consul/options"
+	"github.com/cloudwego-contrib/cwgo-pkg/registry/consul/consulhertz"
 )
 
 const (
@@ -36,8 +36,7 @@ var (
 )
 
 type consulRegistry struct {
-	consulClient *api.Client
-	opts         options
+	registry registry.Registry
 }
 
 var _ registry.Registry = (*consulRegistry)(nil)
@@ -56,92 +55,23 @@ func WithCheck(check *api.AgentServiceCheck) Option {
 
 // NewConsulRegister create a new registry using consul.
 func NewConsulRegister(consulClient *api.Client, opts ...Option) registry.Registry {
-	op := options{
-		check: defaultCheck(),
+	ops := make([]op.Option, len(opts))
+	o := &options{}
+	
+	for i, opt := range opts {
+		opt(o)
+		ops[i] = op.WithCheck(o.check)
 	}
 
-	for _, opt := range opts {
-		opt(&op)
-	}
-
-	return &consulRegistry{consulClient: consulClient, opts: op}
+	return &consulRegistry{registry: consulhertz.NewConsulRegister(consulClient, ops...)}
 }
 
 // Register register a service to consul.
 func (c *consulRegistry) Register(info *registry.Info) error {
-	if err := validateRegistryInfo(info); err != nil {
-		return fmt.Errorf("validating registry info failed, err: %w", err)
-	}
-
-	host, port, err := parseAddr(info.Addr)
-	if err != nil {
-		return fmt.Errorf("parsing addr failed, err: %w", err)
-	}
-
-	svcID, err := getServiceId(info)
-	if err != nil {
-		return fmt.Errorf("getting service id failed, err: %w", err)
-	}
-
-	tags, err := convTagMapToSlice(info.Tags)
-	if err != nil {
-		return err
-	}
-
-	svcInfo := &api.AgentServiceRegistration{
-		ID:      svcID,
-		Name:    info.ServiceName,
-		Address: host,
-		Port:    port,
-		Tags:    tags,
-		Weights: &api.AgentWeights{
-			Passing: info.Weight,
-			Warning: info.Weight,
-		},
-		Check: c.opts.check,
-	}
-	if c.opts.check != nil {
-		c.opts.check.TCP = net.JoinHostPort(host, fmt.Sprintf("%d", port))
-		svcInfo.Check = c.opts.check
-	}
-
-	return c.consulClient.Agent().ServiceRegister(svcInfo)
+	return c.registry.Register(info)
 }
 
 // Deregister deregister a service from consul.
 func (c *consulRegistry) Deregister(info *registry.Info) error {
-	err := validateRegistryInfo(info)
-	if err != nil {
-		return fmt.Errorf("validating registry info failed, err: %w", err)
-	}
-
-	svcID, err := getServiceId(info)
-	if err != nil {
-		return err
-	}
-
-	return c.consulClient.Agent().ServiceDeregister(svcID)
-}
-
-func defaultCheck() *api.AgentServiceCheck {
-	check := new(api.AgentServiceCheck)
-	check.Timeout = DefaultCheckTimeout
-	check.Interval = DefaultCheckInterval
-	check.DeregisterCriticalServiceAfter = DefaultCheckDeregisterCriticalServiceAfter
-
-	return check
-}
-
-func validateRegistryInfo(info *registry.Info) error {
-	if info == nil {
-		return ErrNilInfo
-	}
-	if info.ServiceName == "" {
-		return ErrMissingServiceName
-	}
-	if info.Addr == nil {
-		return ErrMissingAddr
-	}
-
-	return nil
+	return c.registry.Deregister(info)
 }
