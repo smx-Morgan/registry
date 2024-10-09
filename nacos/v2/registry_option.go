@@ -14,9 +14,10 @@
 
 package nacos
 
+import cwOption "github.com/cloudwego-contrib/cwgo-pkg/registry/nacos/options"
+
 type registryOptions struct {
-	cluster string
-	group   string
+	cwOption cwOption.Option
 }
 
 // RegistryOption Option is nacos registry option.
@@ -25,13 +26,13 @@ type RegistryOption func(o *registryOptions)
 // WithRegistryCluster with cluster option.
 func WithRegistryCluster(cluster string) RegistryOption {
 	return func(o *registryOptions) {
-		o.cluster = cluster
+		o.cwOption = cwOption.WithCluster(cluster)
 	}
 }
 
 // WithRegistryGroup with group option.
 func WithRegistryGroup(group string) RegistryOption {
 	return func(o *registryOptions) {
-		o.group = group
+		o.cwOption = cwOption.WithGroup(group)
 	}
 }
