@@ -3,7 +3,6 @@ module github.com/hertz-contrib/registry/redis
 go 1.21
 
 require (
-	github.com/bytedance/gopkg v0.1.1
 	github.com/bytedance/sonic v1.12.2
 	github.com/cloudwego/hertz v0.9.2
 	github.com/redis/go-redis/v9 v9.4.0
@@ -11,6 +10,7 @@ require (
 )
 
 require (
+	github.com/bytedance/gopkg v0.1.1 // indirect
 	github.com/bytedance/sonic/loader v0.2.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
