@@ -111,30 +111,30 @@ func TestRegistryAndDeregister(t *testing.T) {
 	err = register.Deregister(&infos[0])
 	assert.Nil(t, err)
 
-	// registry-hertz info cwerror
+	// registry info error
 	err = register.Register(&infos[1])
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "valid parse registry-hertz info cwerror")
+	assert.Contains(t, err.Error(), "valid parse registry info error")
 
-	// registry-hertz info addr cwerror
+	// registry info addr error
 	err = register.Register(&infos[2])
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "parse registry-hertz info addr cwerror")
+	assert.Contains(t, err.Error(), "parse registry info addr error")
 
-	// port cwerror
+	// port error
 	err = register.Register(&infos[3])
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "parse registry-hertz info port cwerror")
+	assert.Contains(t, err.Error(), "parse registry info port error")
 
 	// addr nil
 	err = register.Register(&infos[4])
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "valid parse registry-hertz info cwerror")
+	assert.Contains(t, err.Error(), "valid parse registry info error")
 
-	// instance cwerror
+	// instance error
 	err = register.Register(&infos[5])
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "register instance cwerror")
+	assert.Contains(t, err.Error(), "register instance error")
 }
 
 // TestMultipleInstances test registry multiple service,then deregister one
@@ -157,8 +157,6 @@ func TestMultipleInstances(t *testing.T) {
 	})
 	assert.Nil(t, err)
 
-	time.Sleep(time.Second)
-
 	res, err := namingClient.SelectInstances(vo.SelectInstancesParam{
 		ServiceName: svcName,
 		GroupName:   groupName,
@@ -175,7 +173,7 @@ func TestMultipleInstances(t *testing.T) {
 	})
 	assert.Nil(t, err)
 
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 30)
 
 	res, err = namingClient.SelectInstances(vo.SelectInstancesParam{
 		ServiceName: svcName,
@@ -183,7 +181,6 @@ func TestMultipleInstances(t *testing.T) {
 		Clusters:    []string{clusterName},
 		HealthyOnly: true,
 	})
-
 	assert.Equal(t, "instance list is empty!", err.Error())
 	assert.Equal(t, 0, len(res))
 }

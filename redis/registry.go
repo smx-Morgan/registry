@@ -15,32 +15,130 @@
 package redis
 
 import (
-	"github.com/cloudwego/hertz/pkg/app/server/registry"
+	"context"
+	"errors"
+	"sync"
 
-	cwRedis "github.com/cloudwego-contrib/cwgo-pkg/registry/redis/redishertz"
+	"github.com/bytedance/gopkg/util/gopool"
+	"github.com/cloudwego/hertz/pkg/app/server/registry"
+	"github.com/redis/go-redis/v9"
 )
 
 var _ registry.Registry = (*redisRegistry)(nil)
 
 type redisRegistry struct {
-	registry registry.Registry
+	mu      sync.Mutex
+	options *Options
+	client  *redis.Client
+	rctx    *registryContext
+}
+
+type registryContext struct {
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // NewRedisRegistry creates a redis registry
 func NewRedisRegistry(addr string, opts ...Option) registry.Registry {
-	o := Options{}
-
-	for _, opt := range opts {
-		opt(&o)
+	options := &Options{
+		Options: &redis.Options{
+			Addr:     addr,
+			Password: "",
+			DB:       0,
+		},
+		expireTime:      defaultExpireTime,
+		refreshInterval: defaultRefreshInterval,
 	}
-
-	return cwRedis.NewRedisRegistry(addr, o.cfgs...)
+	for _, opt := range opts {
+		opt(options)
+	}
+	rdb := redis.NewClient(options.Options)
+	return &redisRegistry{
+		options: options,
+		client:  rdb,
+	}
 }
 
 func (r *redisRegistry) Register(info *registry.Info) error {
-	return r.registry.Register(info)
+	if err := validateRegistryInfo(info); err != nil {
+		return err
+	}
+
+	rctx := registryContext{}
+	rctx.ctx, rctx.cancel = context.WithCancel(context.Background())
+	rdb := r.client
+
+	hash, err := prepareRegistryHash(info)
+	if err != nil {
+		return err
+	}
+
+	r.mu.Lock()
+	r.rctx = &rctx
+	r.mu.Unlock()
+
+	keys := []string{
+		hash.key,
+	}
+	args := []interface{}{
+		hash.field,
+		hash.value,
+		r.options.expireTime,
+	}
+
+	err = registerScript.Run(rctx.ctx, rdb, keys, args).Err()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return err
+	}
+
+	gopool.Go(func() {
+		keepAlive(rctx.ctx, hash, r)
+	})
+	return nil
 }
 
 func (r *redisRegistry) Deregister(info *registry.Info) error {
-	return r.registry.Deregister(info)
+	if err := validateRegistryInfo(info); err != nil {
+		return err
+	}
+
+	rctx := r.rctx
+	rdb := r.client
+
+	hash, err := prepareRegistryHash(info)
+	if err != nil {
+		return err
+	}
+
+	keys := []string{
+		hash.key,
+	}
+	args := []interface{}{
+		hash.field,
+	}
+
+	err = deregisterScript.Run(rctx.ctx, rdb, keys, args).Err()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return err
+	}
+
+	rctx.cancel()
+	return nil
 }
+
+var registerScript = redis.NewScript(`
+local key = KEYS[1]
+local field = ARGV[1]
+local value = ARGV[2]
+local expireTime = tonumber(ARGV[3])
+
+redis.call('HSET', key, field, value)
+redis.call('EXPIRE', key, expireTime)
+`)
+
+var deregisterScript = redis.NewScript(`
+local key = KEYS[1]
+local field = ARGV[1]
+
+redis.call('HDEL', key, field)
+`)

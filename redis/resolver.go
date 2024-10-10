@@ -17,36 +17,61 @@ package redis
 import (
 	"context"
 
+	"github.com/bytedance/sonic"
 	"github.com/cloudwego/hertz/pkg/app/client/discovery"
-
-	cwRedis "github.com/cloudwego-contrib/cwgo-pkg/registry/redis/redishertz"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/redis/go-redis/v9"
 )
 
 var _ discovery.Resolver = (*redisResolver)(nil)
 
 type redisResolver struct {
-	resolver discovery.Resolver
+	client *redis.Client
 }
 
 // NewRedisResolver creates a redis resolver
 func NewRedisResolver(addr string, opts ...Option) discovery.Resolver {
-	o := Options{}
-
-	for _, opt := range opts {
-		opt(&o)
+	options := &Options{
+		Options: &redis.Options{
+			Addr: addr,
+		},
 	}
-
-	return cwRedis.NewRedisResolver(addr, o.cfgs...)
+	for _, opt := range opts {
+		opt(options)
+	}
+	rdb := redis.NewClient(options.Options)
+	return &redisResolver{
+		client: rdb,
+	}
 }
 
-func (r *redisResolver) Target(ctx context.Context, target *discovery.TargetInfo) string {
-	return r.resolver.Target(ctx, target)
+func (r *redisResolver) Target(_ context.Context, target *discovery.TargetInfo) string {
+	return target.Host
 }
 
 func (r *redisResolver) Resolve(ctx context.Context, desc string) (discovery.Result, error) {
-	return r.resolver.Resolve(ctx, desc)
+	rdb := r.client
+	fvs := rdb.HGetAll(ctx, generateKey(desc, server)).Val()
+	var its []discovery.Instance
+	for f, v := range fvs {
+		var ri registryInfo
+		err := sonic.Unmarshal([]byte(v), &ri)
+		if err != nil {
+			hlog.Warnf("HERTZ: fail to unmarshal with err: %v, ignore instance Addr: %v", err, f)
+			continue
+		}
+		weight := ri.Weight
+		if weight <= 0 {
+			weight = defaultWeight
+		}
+		its = append(its, discovery.NewInstance(tcp, ri.Addr, weight, ri.Tags))
+	}
+	return discovery.Result{
+		CacheKey:  desc,
+		Instances: its,
+	}, nil
 }
 
 func (r *redisResolver) Name() string {
-	return r.resolver.Name()
+	return "redis"
 }

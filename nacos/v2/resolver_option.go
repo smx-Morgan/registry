@@ -14,10 +14,9 @@
 
 package nacos
 
-import cwOption "github.com/cloudwego-contrib/cwgo-pkg/registry/nacos/options"
-
 type resolverOptions struct {
-	cfgs []cwOption.ResolverOption
+	cluster string
+	group   string
 }
 
 // ResolverOption Option is nacos registry option.
@@ -26,13 +25,13 @@ type ResolverOption func(o *resolverOptions)
 // WithResolverCluster with cluster option.
 func WithResolverCluster(cluster string) ResolverOption {
 	return func(o *resolverOptions) {
-		o.cfgs = append(o.cfgs, cwOption.WithResolverCluster(cluster))
+		o.cluster = cluster
 	}
 }
 
 // WithResolverGroup with group option.
 func WithResolverGroup(group string) ResolverOption {
 	return func(o *resolverOptions) {
-		o.cfgs = append(o.cfgs, cwOption.WithResolverGroup(group))
+		o.group = group
 	}
 }
