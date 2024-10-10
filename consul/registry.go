@@ -28,7 +28,7 @@ type consulRegistry struct {
 var _ registry.Registry = (*consulRegistry)(nil)
 
 type options struct {
-	cwOption cwOption.Option
+	cfgs []cwOption.Option
 }
 
 // Option is the option of Consul.
@@ -37,21 +37,19 @@ type Option func(o *options)
 // WithCheck is consul registry option to set AgentServiceCheck.
 func WithCheck(check *api.AgentServiceCheck) Option {
 	return func(o *options) {
-		o.cwOption = cwOption.WithCheck(check)
+		o.cfgs = append(o.cfgs, cwOption.WithCheck(check))
 	}
 }
 
 // NewConsulRegister create a new registry using consul.
 func NewConsulRegister(consulClient *api.Client, opts ...Option) registry.Registry {
-	cwopts := make([]cwOption.Option, 0, len(opts))
 	o := options{}
 
 	for _, opt := range opts {
 		opt(&o)
-		cwopts = append(cwopts, o.cwOption)
 	}
 
-	return &consulRegistry{registry: consulhertz.NewConsulRegister(consulClient, cwopts...)}
+	return &consulRegistry{registry: consulhertz.NewConsulRegister(consulClient, o.cfgs...)}
 }
 
 // Register register a service to consul.

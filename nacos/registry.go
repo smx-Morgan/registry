@@ -30,7 +30,7 @@ type (
 	}
 
 	registryOptions struct {
-		cwOption cwOption.Option
+		cfgs []cwOption.Option
 	}
 
 	// RegistryOption Option is nacos registry option.
@@ -40,14 +40,14 @@ type (
 // WithRegistryCluster with cluster option.
 func WithRegistryCluster(cluster string) RegistryOption {
 	return func(o *registryOptions) {
-		o.cwOption = cwOption.WithCluster(cluster)
+		o.cfgs = append(o.cfgs, cwOption.WithCluster(cluster))
 	}
 }
 
 // WithRegistryGroup with group option.
 func WithRegistryGroup(group string) RegistryOption {
 	return func(o *registryOptions) {
-		o.cwOption = cwOption.WithGroup(group)
+		o.cfgs = append(o.cfgs, cwOption.WithGroup(group))
 	}
 }
 
@@ -61,9 +61,9 @@ func (n *nacosRegistry) Deregister(info *registry.Info) error {
 
 // NewDefaultNacosRegistry create a default service registry using nacos.
 func NewDefaultNacosRegistry(opts ...RegistryOption) (registry.Registry, error) {
-	cwOpts := transferRegistryOptions(opts...)
+	cfgs := transferRegistryOptions(opts...)
 
-	nacosRegistry, err := cwNacos.NewDefaultNacosRegistry(cwOpts...)
+	nacosRegistry, err := cwNacos.NewDefaultNacosRegistry(cfgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,20 +73,18 @@ func NewDefaultNacosRegistry(opts ...RegistryOption) (registry.Registry, error) 
 
 // NewNacosRegistry create a new registry using nacos.
 func NewNacosRegistry(client naming_client.INamingClient, opts ...RegistryOption) registry.Registry {
-	cwOpts := transferRegistryOptions(opts...)
+	cfgs := transferRegistryOptions(opts...)
 
-	return &nacosRegistry{registry: cwNacos.NewNacosRegistry(client, cwOpts...)}
+	return &nacosRegistry{registry: cwNacos.NewNacosRegistry(client, cfgs...)}
 }
 
 // transferRegistryOptions transfer registry options to options in cwgo-pkg.
 func transferRegistryOptions(opts ...RegistryOption) []cwOption.Option {
-	cwOpts := make([]cwOption.Option, 0, len(opts))
 	o := &registryOptions{}
 
 	for _, opt := range opts {
 		opt(o)
-		cwOpts = append(cwOpts, o.cwOption)
 	}
 
-	return cwOpts
+	return o.cfgs
 }

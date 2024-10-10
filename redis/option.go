@@ -26,7 +26,7 @@ import (
 type Option func(opts *Options)
 
 type Options struct {
-	cwOptions cwRedis.Option
+	cfgs []cwRedis.Option
 }
 
 // WithExpireTime redis key expiration time in seconds
@@ -34,7 +34,7 @@ type Options struct {
 // Default: 60s
 func WithExpireTime(time int) Option {
 	return func(opts *Options) {
-		opts.cwOptions = cwRedis.WithExpireTime(time)
+		opts.cfgs = append(opts.cfgs, cwRedis.WithExpireTime(time))
 	}
 }
 
@@ -43,42 +43,42 @@ func WithExpireTime(time int) Option {
 // Default: 30s
 func WithRefreshInterval(interval int) Option {
 	return func(opts *Options) {
-		opts.cwOptions = cwRedis.WithRefreshInterval(interval)
+		opts.cfgs = append(opts.cfgs, cwRedis.WithRefreshInterval(interval))
 	}
 }
 
 func WithPassword(password string) Option {
 	return func(opts *Options) {
-		opts.cwOptions = cwRedis.WithPassword(password)
+		opts.cfgs = append(opts.cfgs, cwRedis.WithPassword(password))
 	}
 }
 
 func WithDB(db int) Option {
 	return func(opts *Options) {
-		opts.cwOptions = cwRedis.WithDB(db)
+		opts.cfgs = append(opts.cfgs, cwRedis.WithDB(db))
 	}
 }
 
 func WithTLSConfig(t *tls.Config) Option {
 	return func(opts *Options) {
-		opts.cwOptions = cwRedis.WithTLSConfig(t)
+		opts.cfgs = append(opts.cfgs, cwRedis.WithTLSConfig(t))
 	}
 }
 
 func WithDialer(dialer func(ctx context.Context, network, addr string) (net.Conn, error)) Option {
 	return func(opts *Options) {
-		opts.cwOptions = cwRedis.WithDialer(dialer)
+		opts.cfgs = append(opts.cfgs, cwRedis.WithDialer(dialer))
 	}
 }
 
 func WithReadTimeout(t time.Duration) Option {
 	return func(opts *Options) {
-		opts.cwOptions = cwRedis.WithReadTimeout(t)
+		opts.cfgs = append(opts.cfgs, cwRedis.WithReadTimeout(t))
 	}
 }
 
 func WithWriteTimeout(t time.Duration) Option {
 	return func(opts *Options) {
-		opts.cwOptions = cwRedis.WithWriteTimeout(t)
+		opts.cfgs = append(opts.cfgs, cwRedis.WithWriteTimeout(t))
 	}
 }

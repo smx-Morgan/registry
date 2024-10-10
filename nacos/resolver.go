@@ -28,7 +28,7 @@ var _ discovery.Resolver = (*nacosResolver)(nil)
 
 type (
 	resolverOptions struct {
-		cwOption cwOption.ResolverOption
+		cgfs []cwOption.ResolverOption
 	}
 
 	// ResolverOption Option is nacos registry option.
@@ -42,14 +42,14 @@ type (
 // WithResolverCluster with cluster option.
 func WithResolverCluster(cluster string) ResolverOption {
 	return func(o *resolverOptions) {
-		o.cwOption = cwOption.WithResolverCluster(cluster)
+		o.cgfs = append(o.cgfs, cwOption.WithResolverCluster(cluster))
 	}
 }
 
 // WithResolverGroup with group option.
 func WithResolverGroup(group string) ResolverOption {
 	return func(o *resolverOptions) {
-		o.cwOption = cwOption.WithResolverGroup(group)
+		o.cgfs = append(o.cgfs, cwOption.WithResolverGroup(group))
 	}
 }
 
@@ -67,9 +67,9 @@ func (n *nacosResolver) Name() string {
 
 // NewDefaultNacosResolver create a default service resolver using nacos.
 func NewDefaultNacosResolver(opts ...ResolverOption) (discovery.Resolver, error) {
-	cwOpts := transferResolverOption(opts...)
+	cfgs := transferResolverOption(opts...)
 
-	nacosResolver, err := cwNacos.NewDefaultNacosResolver(cwOpts...)
+	nacosResolver, err := cwNacos.NewDefaultNacosResolver(cfgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -79,24 +79,20 @@ func NewDefaultNacosResolver(opts ...ResolverOption) (discovery.Resolver, error)
 
 // NewNacosResolver create a service resolver using nacos.
 func NewNacosResolver(cli naming_client.INamingClient, opts ...ResolverOption) discovery.Resolver {
-	cwOpts := transferResolverOption(opts...)
+	cfgs := transferResolverOption(opts...)
 
-	return &nacosResolver{resolver: cwNacos.NewNacosResolver(cli, cwOpts...)}
+	return &nacosResolver{resolver: cwNacos.NewNacosResolver(cli, cfgs...)}
 }
 
 // transferResolverOption transfer local ResolverOption to ResolverOption in cwgo-pkg.
 func transferResolverOption(opts ...ResolverOption) []cwOption.ResolverOption {
-	cwOpts := make([]cwOption.ResolverOption, 0, len(opts))
 	o := &resolverOptions{}
 
 	for _, opt := range opts {
 		opt(o)
-		if o.cwOption != nil {
-			cwOpts = append(cwOpts, o.cwOption)
-		}
 	}
 
-	return cwOpts
+	return o.cgfs
 }
 
 // compareMaps compares two maps regardless of nil or empty

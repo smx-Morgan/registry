@@ -30,15 +30,13 @@ type redisResolver struct {
 
 // NewRedisResolver creates a redis resolver
 func NewRedisResolver(addr string, opts ...Option) discovery.Resolver {
-	cwOpts := make([]cwRedis.Option, 0, len(opts))
 	o := Options{}
 
 	for _, opt := range opts {
 		opt(&o)
-		cwOpts = append(cwOpts, o.cwOptions)
 	}
 
-	return cwRedis.NewRedisResolver(addr, cwOpts...)
+	return cwRedis.NewRedisResolver(addr, o.cfgs...)
 }
 
 func (r *redisResolver) Target(ctx context.Context, target *discovery.TargetInfo) string {

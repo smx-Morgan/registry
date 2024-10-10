@@ -32,9 +32,9 @@ type (
 
 // NewDefaultNacosRegistry create a default service registry using nacos.
 func NewDefaultNacosRegistry(opts ...RegistryOption) (registry.Registry, error) {
-	cwOpts := transferRegistryOptions(opts...)
+	cfgs := transferRegistryOptions(opts...)
 
-	nacosRegistry, err := cwNacos.NewDefaultNacosRegistry(cwOpts...)
+	nacosRegistry, err := cwNacos.NewDefaultNacosRegistry(cfgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +44,9 @@ func NewDefaultNacosRegistry(opts ...RegistryOption) (registry.Registry, error) 
 
 // NewNacosRegistry create a new registry using nacos.
 func NewNacosRegistry(client naming_client.INamingClient, opts ...RegistryOption) registry.Registry {
-	cwOpts := transferRegistryOptions(opts...)
+	cfgs := transferRegistryOptions(opts...)
 	return &nacosRegistry{
-		registry: cwNacos.NewNacosRegistry(client, cwOpts...),
+		registry: cwNacos.NewNacosRegistry(client, cfgs...),
 	}
 }
 
@@ -59,11 +59,11 @@ func (n *nacosRegistry) Deregister(info *registry.Info) error {
 }
 
 func transferRegistryOptions(opts ...RegistryOption) []cwOption.Option {
-	cwOpts := make([]cwOption.Option, 0, len(opts))
 	o := registryOptions{}
+
 	for _, opt := range opts {
 		opt(&o)
-		cwOpts = append(cwOpts, o.cwOption)
 	}
-	return cwOpts
+
+	return o.cfgs
 }

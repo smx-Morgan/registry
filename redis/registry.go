@@ -28,15 +28,13 @@ type redisRegistry struct {
 
 // NewRedisRegistry creates a redis registry
 func NewRedisRegistry(addr string, opts ...Option) registry.Registry {
-	cwOpts := make([]cwRedis.Option, 0, len(opts))
 	o := Options{}
 
 	for _, opt := range opts {
 		opt(&o)
-		cwOpts = append(cwOpts, o.cwOptions)
 	}
 
-	return cwRedis.NewRedisRegistry(addr, cwOpts...)
+	return cwRedis.NewRedisRegistry(addr, o.cfgs...)
 }
 
 func (r *redisRegistry) Register(info *registry.Info) error {

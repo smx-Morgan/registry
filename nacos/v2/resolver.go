@@ -44,9 +44,9 @@ func (n *nacosResolver) Name() string {
 
 // NewDefaultNacosResolver create a default service resolver using nacos.
 func NewDefaultNacosResolver(opts ...ResolverOption) (discovery.Resolver, error) {
-	cwOpts := transferResolverOption(opts...)
+	cfgs := transferResolverOption(opts...)
 
-	nacosResolver, err := cwNacos.NewDefaultNacosResolver(cwOpts...)
+	nacosResolver, err := cwNacos.NewDefaultNacosResolver(cfgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,18 +56,18 @@ func NewDefaultNacosResolver(opts ...ResolverOption) (discovery.Resolver, error)
 
 // NewNacosResolver create a service resolver using nacos.
 func NewNacosResolver(cli naming_client.INamingClient, opts ...ResolverOption) discovery.Resolver {
-	cwOpts := transferResolverOption(opts...)
+	cfgs := transferResolverOption(opts...)
 	return &nacosResolver{
-		resolver: cwNacos.NewNacosResolver(cli, cwOpts...),
+		resolver: cwNacos.NewNacosResolver(cli, cfgs...),
 	}
 }
 
 func transferResolverOption(opts ...ResolverOption) []cwOption.ResolverOption {
-	cwOpts := make([]cwOption.ResolverOption, 0, len(opts))
 	o := resolverOptions{}
+
 	for _, opt := range opts {
 		opt(&o)
-		cwOpts = append(cwOpts, o.cwOption)
 	}
-	return cwOpts
+
+	return o.cfgs
 }
