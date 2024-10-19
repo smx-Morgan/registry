@@ -175,7 +175,7 @@ func TestMultipleInstances(t *testing.T) {
 	})
 	assert.Nil(t, err)
 
-	time.Sleep(time.Second * 60)
+	time.Sleep(time.Second * 30)
 
 	res, err = namingClient.SelectInstances(vo.SelectInstancesParam{
 		ServiceName: svcName,
