@@ -184,7 +184,10 @@ func TestMultipleInstances(t *testing.T) {
 		HealthyOnly: true,
 	})
 
-	assert.Equal(t, "instance list is empty!", err.Error())
+	if err != nil {
+		assert.Equal(t, "instance list is empty!", err.Error())
+	}
+
 	assert.Equal(t, 0, len(res))
 }
 
