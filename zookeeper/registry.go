@@ -48,6 +48,7 @@ func (z *zookeeperRegistry) Register(info *registry.Info) error {
 		return fmt.Errorf("valid parse registry info error: %w", err)
 	}
 	path, err := buildPath(info)
+
 	if err != nil {
 		return err
 	}
@@ -55,7 +56,7 @@ func (z *zookeeperRegistry) Register(info *registry.Info) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return z.createNode(path, content, true)
 }
 
